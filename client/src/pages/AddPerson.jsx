@@ -109,8 +109,8 @@ function AddPersonAndAsset() {
         number: "",
       },
       beeDetails: {
-        number: "",
         type: "",
+        number: "",
       },
       productsOrServices: "",
       buyers: "",
@@ -547,24 +547,26 @@ function AddPersonAndAsset() {
 
         {selectedSector === "Bletari" ? (
           <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2">
-            <h2 className="text-xl font-semibold">Lloji</h2>
-            <input
-              type="text"
-              name="beeDetails.type"
-              value={formik.values.beeDetails.type}
-              onChange={formik.handleChange}
-              placeholder="Tipi i bletave"
-              className="border border-gray-300 rounded-lg p-2 w-full"
-            />
-            <h2 className="text-xl font-semibold">Numri i koshereve</h2>
-            <input
-              type="number"
-              name="beeDetails.type"
-              value={formik.values.beeDetails.number}
-              onChange={formik.handleChange}
-              placeholder="Number of Beehives"
-              className="border border-gray-300 rounded-lg p-2 w-full"
-            />
+            <div>
+              <h2 className="mb-2 font-semibold">Lloji</h2>
+              <input
+                type="text"
+                name="beeDetails.type"
+                value={formik.values.beeDetails.type}
+                onChange={formik.handleChange}
+                className="border border-gray-300 rounded-lg p-2 w-full"
+              />
+            </div>
+            <div>
+              <h2 className="mb-2 font-semibold">Numri i koshereve</h2>
+              <input
+                type="number"
+                name="beeDetails.number"
+                value={formik.values.beeDetails.number}
+                onChange={formik.handleChange}
+                className="border border-gray-300 rounded-lg p-2 w-full"
+              />
+            </div>
           </div>
         ) : null}
         <h2 className="text-xl font-semibold mt-4">Asetet</h2>

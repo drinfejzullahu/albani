@@ -370,7 +370,7 @@ function Persons() {
                       "-"
                     )}
                   </td>
-                  <td className="py-3 px-6 text-center flex flex-row">
+                  <td className="py-3 px-6 text-center flex flex-row min-w-[230px]">
                     {person.plantDetails.length > 0 && (
                       <button
                         onClick={() => {
