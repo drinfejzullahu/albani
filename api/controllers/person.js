@@ -7,7 +7,6 @@ import {
   Pemetari,
   ProdhimBimor,
   AgroBiznesFamiljar,
-  BiznesFamiljar,
 } from "../models/sectors.js";
 
 // Helper function to get the sector model based on sector type
@@ -23,8 +22,6 @@ const getSectorModel = (sectorType) => {
       return ProdhimBimor;
     case "AgroBiznesFamiljar":
       return AgroBiznesFamiljar;
-    case "BiznesFamiljar":
-      return BiznesFamiljar;
     default:
       return null;
   }

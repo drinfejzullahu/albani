@@ -25,11 +25,6 @@ const AgroBiznesFamiljarSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const BiznesFamiljarSchema = new mongoose.Schema({
-  name: { type: String, default: "BiznesFamiljar" },
-  createdAt: { type: Date, default: Date.now },
-});
-
 const BletariSchema = new mongoose.Schema({
   name: { type: String, default: "Bletari" },
   createdAt: { type: Date, default: Date.now },
@@ -44,8 +39,6 @@ const AgroBiznesFamiljar = mongoose.model(
   "AgroBiznesFamiljar",
   AgroBiznesFamiljarSchema
 );
-const BiznesFamiljar = mongoose.model("BiznesFamiljar", BiznesFamiljarSchema);
-
 const Bletari = mongoose.model("Bletari", BletariSchema);
 
 export {
@@ -54,6 +47,5 @@ export {
   Pemetari,
   ProdhimBimor,
   AgroBiznesFamiljar,
-  BiznesFamiljar,
   Bletari,
 };

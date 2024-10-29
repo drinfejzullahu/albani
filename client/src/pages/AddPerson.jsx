@@ -23,7 +23,6 @@ export const sectorData = [
   { name: "Pemetari" },
   { name: "ProdhimBimor" },
   { name: "AgroBiznesFamiljar" },
-  { name: "BiznesFamiljar" },
   { name: "Bletari" },
 ];
 

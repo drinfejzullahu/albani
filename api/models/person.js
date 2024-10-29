@@ -45,7 +45,6 @@ const PersonSchema = new mongoose.Schema({
       "Pemetari",
       "ProdhimBimor",
       "AgroBiznesFamiljar",
-      "BiznesFamiljar",
       "Bletari",
     ],
     required: true,

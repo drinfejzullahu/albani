@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import * as XLSX from "xlsx";
 
 const sectorData = [
   { name: "Bujqesi" },
@@ -7,7 +8,6 @@ const sectorData = [
   { name: "Pemetari" },
   { name: "ProdhimBimor" },
   { name: "AgroBiznesFamiljar" },
-  { name: "BiznesFamiljar" },
   { name: "Bletari" },
 ];
 
@@ -36,7 +36,7 @@ const DetailsModal = ({ type, data, onClose }) => {
           onClick={onClose}
           className="bg-blue-500 text-white p-2 rounded mt-4"
         >
-          Close
+          Mbylle
         </button>
       </div>
     </div>
@@ -57,7 +57,6 @@ function Persons() {
   const [locations, setLocations] = useState([]);
   const [sections, setSections] = useState([]);
 
-  // Fetch person data
   useEffect(() => {
     axios
       .get("http://localhost:3000/api/persons")
@@ -99,7 +98,6 @@ function Persons() {
     fetchDefaultSections();
   }, [selectedSectorType]);
 
-  // Search handler
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
@@ -116,16 +114,6 @@ function Persons() {
     }
   };
 
-  //const filteredPersons = persons.filter(
-  //  (person) =>
-  //    (selectedLocation ? person.location?._id === selectedLocation : true) &&
-  //    (selectedSectorType ? person.sectorType === selectedSectorType : true) &&
-  //    (selectedSectorModel ? person.sector === selectedSectorModel : true) &&
-  //    (searchQuery
-  //      ? person.name.toLowerCase().includes(searchQuery.toLowerCase())
-  //      : true)
-  //);
-
   const filteredPersons = persons.filter((person) => {
     const locationMatch = selectedLocation
       ? person.location?._id === selectedLocation
@@ -133,60 +121,44 @@ function Persons() {
     const sectorTypeMatch = selectedSectorType
       ? person.sectorType === selectedSectorType
       : true;
-    const sectorModelMatch = ![
-      "Blegtori",
-      "Bletari",
-      "Pemetari",
-      "ProdhimBimor",
-    ].includes(selectedSectorType)
+    const sectorModelMatch = selectedSectorModel
       ? person.sector === selectedSectorModel
       : true;
     const searchMatch = searchQuery
       ? person.name.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
 
-    // Additional filtering based on selectedSectorType and corresponding details
-    let additionalFilters = true; // Default to true
+    let additionalFilters = true;
     if (selectedSectorModel) {
       switch (selectedSectorType) {
         case "Pemetari":
-          // Check if any treeDetails match the selectedSectorModel
           additionalFilters = person.treeDetails.some(
             (tree) => tree?.type === selectedSectorModel
           );
           break;
 
         case "Blegtori":
-          // Check if any livestockDetails match the selectedSectorModel
           additionalFilters = person.livestockDetails.some(
             (livestock) => livestock.type === selectedSectorModel
           );
-          console.log(`  Livestock Details Match: ${additionalFilters}`);
           break;
 
         case "ProdhimBimor":
-          // Check if any plantDetails match the selectedSectorModel
           additionalFilters = person.plantDetails.some(
             (plant) => plant.type === selectedSectorModel
           );
-          console.log(`  Plant Details Match: ${additionalFilters}`);
           break;
 
         case "Bletari":
-          // Directly check the beeDetails type
           additionalFilters = person.beeDetails.type === selectedSectorModel;
-          console.log(`  Bee Details Match: ${additionalFilters}`);
           break;
 
         default:
-          // If selectedSectorType is none of the specified types, we check the sector field
-          additionalFilters = true; // We don’t filter further
+          additionalFilters = true;
           break;
       }
     }
 
-    console.log(additionalFilters);
-    // Combine all match conditions
     const finalMatch =
       locationMatch &&
       sectorTypeMatch &&
@@ -194,7 +166,6 @@ function Persons() {
       searchMatch &&
       additionalFilters;
 
-    console.log(`  Final Match: ${finalMatch}`);
     return finalMatch;
   });
   const indexOfLastPerson = currentPage * personsPerPage;
@@ -206,6 +177,183 @@ function Persons() {
 
   const totalPages = Math.ceil(filteredPersons.length / personsPerPage);
 
+  const handleExportToExcel = () => {
+    let data = filteredPersons?.length > 0 ? filteredPersons : persons;
+
+    const title = [["Personët"]];
+
+    const headers = [
+      [
+        "Emri dhe mbiemri",
+        "Emri i prindit",
+        "Datëlindja",
+        "Gjinia",
+        "Numri i telefonit",
+        "Email",
+        "Adresa e fermës",
+        "Adresa personale",
+        "Përgatitja Shkollore",
+        "Profesioni",
+        "Numri i Anëtarëve të Familjes",
+        "Lokacioni",
+        "Tokë në pronësi (hektarë ose m2)",
+        "Tokë me qira (hektarë ose m2)",
+        "Tipi i sektorit",
+        "Sektori",
+        "Asetet",
+        "Investimet",
+        "Detajet",
+      ],
+    ];
+
+    const exportData = data.map((person) => {
+      // Flatten arrays of objects (e.g., assets, investments, treeDetails, etc.)
+      const assets =
+        person.assets
+          ?.map((asset) => `Tipi: ${asset.assetType}, Sasia: ${asset.quantity}`)
+          .join("; ") || "-";
+      const investments =
+        person.investments
+          ?.map(
+            (investment) =>
+              `Tipi: ${investment.type}, Sasia: ${investment.units}, Vlera: ${investment.value}`
+          )
+          .join("; ") || "-";
+      const treeDetails =
+        (person.treeDetails.length > 0 &&
+          person.treeDetails
+            ?.map((tree) => `Tipi: ${tree.type}, Numri: ${tree.number}`)
+            .join("; ")) ||
+        undefined;
+      const livestockDetails =
+        (person.livestockDetails.length > 0 &&
+          person.livestockDetails
+            ?.map(
+              (livestock) =>
+                `Tipi: ${livestock.type}, Numri: ${livestock.number}`
+            )
+            .join("; ")) ||
+        undefined;
+      const plantDetails =
+        (person.plantDetails?.length > 0 &&
+          person?.plantDetails
+            ?.map((plant) => `Tipi: ${plant.type}, Numri: ${plant.number}`)
+            .join("; ")) ||
+        undefined;
+
+      const beeDetails = `Tipi: ${person?.beeDetails?.type}, Numri: ${person?.beeDetails?.number}`;
+
+      const firstAvailableDetails =
+        treeDetails || plantDetails || livestockDetails || beeDetails || "-";
+
+      console.log(
+        { treeDetails },
+        { plantDetails },
+        { livestockDetails },
+        { beeDetails }
+      );
+      return [
+        person.name || "-",
+        person.parentName || "-",
+        person.dateOfBirth
+          ? new Date(person.dateOfBirth).toLocaleDateString()
+          : "-",
+        person.gender === "m" ? "Burrë" : "Grua",
+        person.phone || "-",
+        person.email || "-",
+        person.farmAddress || "-",
+        person.address || "-",
+        person.educationLevel || "-",
+        person.profession || "-",
+        person.familyMembers || "-",
+        person.location?.location || "-",
+        person.workingLandDetails?.ownedLand || "-",
+        person.workingLandDetails?.rentedLand || "-",
+        person.sectorType || "-",
+        person.sector || "-",
+        assets,
+        investments,
+        firstAvailableDetails,
+      ];
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet([["Personët"]]); // Set title in first row
+    XLSX.utils.sheet_add_aoa(worksheet, headers, { origin: "A2" }); // Headers start on the 2nd row
+    XLSX.utils.sheet_add_aoa(worksheet, exportData, { origin: "A3" }); // Data starts on the 3rd row
+
+    // Create the workbook and append the worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Personët");
+
+    // Applying styles
+    worksheet["A1"].s = {
+      font: { bold: true, sz: 18 },
+      alignment: { horizontal: "center", vertical: "center" },
+    };
+
+    // Merge title row to center the title across all columns
+    const endColumn = String.fromCharCode(
+      "A".charCodeAt(0) + headers[0].length - 1
+    );
+    worksheet["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: headers[0].length - 1 } },
+    ];
+
+    // Style headers
+    headers[0].forEach((_, index) => {
+      const cellAddress = XLSX.utils.encode_cell({ r: 1, c: index });
+      if (worksheet[cellAddress]) {
+        worksheet[cellAddress].s = {
+          font: { bold: true, sz: 12 },
+          fill: { fgColor: { rgb: "D9E1F2" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          },
+        };
+      }
+    });
+
+    // Style data rows
+    exportData.forEach((row, rowIndex) => {
+      row.forEach((_, colIndex) => {
+        const cellAddress = XLSX.utils.encode_cell({
+          r: rowIndex + 2,
+          c: colIndex,
+        });
+        if (worksheet[cellAddress]) {
+          worksheet[cellAddress].s = {
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+              top: { style: "thin", color: { rgb: "CCCCCC" } },
+              bottom: { style: "thin", color: { rgb: "CCCCCC" } },
+              left: { style: "thin", color: { rgb: "CCCCCC" } },
+              right: { style: "thin", color: { rgb: "CCCCCC" } },
+            },
+          };
+        }
+      });
+    });
+
+    // Auto-fit column widths
+    const colWidths = headers[0].map((header, index) => {
+      const maxLength = Math.max(
+        ...exportData.map((row) => row[index]?.toString().length || 0),
+        header.length
+      );
+      return { wch: Math.max(maxLength + 2, 10) }; // Minimum width of 10
+    });
+    worksheet["!cols"] = colWidths;
+
+    // Export workbook
+    XLSX.writeFile(
+      workbook,
+      `Personet.${new Date().toLocaleDateString()}.xlsx`
+    );
+  };
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Lista e personëve</h1>
@@ -219,7 +367,6 @@ function Persons() {
                 type="text"
                 value={searchQuery}
                 onChange={handleSearch}
-                placeholder="Search by name"
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
             </div>
@@ -230,7 +377,7 @@ function Persons() {
                 onChange={(e) => setSelectedLocation(e.target.value)}
                 className="border rounded-lg p-2"
               >
-                <option value="">Select Location</option>
+                <option value="">Zgjidhe lokacionin</option>
                 {locations.map((loc) => (
                   <option key={loc._id} value={loc._id}>
                     {loc.location}
@@ -243,7 +390,10 @@ function Persons() {
               <label className="mb-2 font-semibold">Kërko nga sektori</label>
               <select
                 value={selectedSectorType}
-                onChange={(e) => setSelectedSectorType(e.target.value)}
+                onChange={(e) => {
+                  setSelectedSectorModel("");
+                  setSelectedSectorType(e.target.value);
+                }}
                 className="border rounded-lg p-2"
               >
                 <option value="">Zgjidhe sektorin</option>
@@ -274,8 +424,19 @@ function Persons() {
               </div>
             )}
           </div>
+          <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="flex flex-col">
+              <button
+                onClick={handleExportToExcel}
+                className="border border-green-700 text-green-700  px-4 py-2 rounded mb-4"
+              >
+                Eksporto ne Excel
+              </button>
+            </div>
+          </div>
         </>
       ) : null}
+
       <div className="overflow-x-auto">
         {currentPersons.length > 0 ? (
           <table className="min-w-full bg-white border border-gray-200 rounded-lg">
