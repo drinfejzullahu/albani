@@ -1,54 +1,3 @@
-//import React from "react";
-//import axios from "axios";
-//import { useFormik } from "formik";
-
-//function AddLocation() {
-//  const formik = useFormik({
-//    initialValues: {
-//      location: "", // Input field for location name
-//    },
-//    onSubmit: async (values) => {
-//      const body = {
-//        location: values.location || "New Location", // Use input value or default name
-//      };
-//      try {
-//        const response = await axios.post(
-//          `http://localhost:3000/api/locations`,
-//          body
-//        );
-//        alert("Location added successfully!"); // Notify success
-//      } catch (error) {
-//        console.error("Error:", error);
-//      }
-//    },
-//  });
-
-//  return (
-//    <div className="p-60 pt-20 pb-20">
-//      <h1 className="text-3xl font-bold text-center mb-6">Shto një lokacion</h1>
-//      <form onSubmit={formik.handleSubmit} className="mb-6 flex flex-col gap-4">
-//        <label className="mb-2 font-semibold">Lokacioni</label>
-//        <input
-//          type="text"
-//          name="location" // For entering the location name
-//          value={formik.values.location}
-//          onChange={formik.handleChange}
-//          className="border border-gray-300 rounded-lg p-2 w-full"
-//        />
-
-//        <button
-//          type="submit"
-//          className="border-blue-500 border text-blue-500 bg-transparent px-4 py-2 rounded-lg mt-2 w-fit min-w-[200px]"
-//        >
-//          Shto lokacionin
-//        </button>
-//      </form>
-//    </div>
-//  );
-//}
-
-//export default AddLocation;
-
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import axios from "axios";
@@ -71,7 +20,8 @@ function AddLocation() {
   const handleEdit = (location) => {
     setEditingLocationId(location._id);
     formik.setValues({
-      location: location.location, // Use location.location
+      location: location.location,
+      municipality: location.municipality, // Set the municipality
     });
   };
 
@@ -92,10 +42,12 @@ function AddLocation() {
   const formik = useFormik({
     initialValues: {
       location: "", // For entering the location name
+      municipality: "", // For selecting the municipality
     },
     onSubmit: async (values) => {
       const body = {
         location: values.location || "New Location",
+        municipality: values.municipality || "Bujanoci", // Default to "Bujanoci" if none selected
       };
 
       try {
@@ -108,7 +60,11 @@ function AddLocation() {
           setLocations(
             locations.map((loc) =>
               loc._id === editingLocationId
-                ? { ...loc, location: body.location }
+                ? {
+                    ...loc,
+                    location: body.location,
+                    municipality: body.municipality,
+                  }
                 : loc
             )
           );
@@ -137,6 +93,7 @@ function AddLocation() {
         <thead>
           <tr className="bg-gray-100">
             <th className="border p-2">Lokacioni</th>
+            <th className="border p-2">Komuna</th>
             <th className="border p-2">Aksionet</th>
           </tr>
         </thead>
@@ -144,6 +101,7 @@ function AddLocation() {
           {locations.map((loc) => (
             <tr key={loc._id} className="text-center">
               <td className="border p-2">{loc.location}</td>
+              <td className="border p-2">{loc.municipality}</td>
               <td className="border p-2">
                 <button
                   onClick={() => handleEdit(loc)}
@@ -174,6 +132,21 @@ function AddLocation() {
           placeholder="Enter Location Name"
           className="border border-gray-300 rounded-lg p-2 w-full"
         />
+
+        {/* Municipality Dropdown */}
+        <select
+          name="municipality"
+          value={formik.values.municipality}
+          onChange={formik.handleChange}
+          className="border border-gray-300 rounded-lg p-2 w-full"
+        >
+          <option value="" disabled>
+            Zgjedh komunen
+          </option>
+          <option value="Bujanoci">Bujanoci</option>
+          <option value="Presheva">Presheva</option>
+          <option value="Medvegja">Medvegja</option>
+        </select>
 
         <button
           type="submit"

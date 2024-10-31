@@ -11,6 +11,8 @@ const sectorData = [
   { name: "Bletari" },
 ];
 
+const municipalities = ["Bujanoci", "Presheva", "Medvegja"];
+
 const DetailsModal = ({ type, data, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
@@ -51,6 +53,7 @@ function Persons() {
   const [showAssetsModal, setShowAssetsModal] = useState(null);
   const [showInvestmentsModal, setShowInvestmentsModal] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(null);
+  const [selectedMunicipality, setSelectedMunicipality] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedSectorType, setSelectedSectorType] = useState("");
   const [selectedSectorModel, setSelectedSectorModel] = useState("");
@@ -114,60 +117,98 @@ function Persons() {
     }
   };
 
-  const filteredPersons = persons.filter((person) => {
-    const locationMatch = selectedLocation
-      ? person.location?._id === selectedLocation
-      : true;
-    const sectorTypeMatch = selectedSectorType
-      ? person.sectorType === selectedSectorType
-      : true;
-    const sectorModelMatch = selectedSectorModel
-      ? person.sector === selectedSectorModel
-      : true;
-    const searchMatch = searchQuery
-      ? person.name.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
+  const filteredPersons = persons
+    .filter((person) => {
+      // Calculate the total count for tree, livestock, plant, and bee details
+      const treeTotal = person.treeDetails.reduce(
+        (sum, tree) => sum + tree.number,
+        0
+      );
+      const livestockTotal = person.livestockDetails.reduce(
+        (sum, livestock) => sum + livestock.number,
+        0
+      );
+      const plantTotal = person.plantDetails.reduce(
+        (sum, plant) => sum + plant.number,
+        0
+      );
+      const beeTotal = person.beeDetails?.number || 0;
 
-    let additionalFilters = true;
-    if (selectedSectorModel) {
-      switch (selectedSectorType) {
-        case "Pemetari":
-          additionalFilters = person.treeDetails.some(
-            (tree) => tree?.type === selectedSectorModel
-          );
-          break;
+      // Define matching conditions for each filter
+      const municipalityMatch = selectedMunicipality
+        ? person.location?.municipality === selectedMunicipality
+        : true;
+      const locationMatch = selectedLocation
+        ? person.location?._id === selectedLocation
+        : true;
+      const sectorTypeMatch = selectedSectorType
+        ? person.sectorType === selectedSectorType
+        : true;
+      const sectorModelMatch = selectedSectorModel
+        ? person.sector === selectedSectorModel
+        : true;
+      const searchMatch = searchQuery
+        ? person.name.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
 
-        case "Blegtori":
-          additionalFilters = person.livestockDetails.some(
-            (livestock) => livestock.type === selectedSectorModel
-          );
-          break;
+      // Additional filters based on the sector type and model
+      let additionalFilters = true;
+      if (selectedSectorModel) {
+        switch (selectedSectorType) {
+          case "Pemetari":
+            additionalFilters = person.treeDetails.some(
+              (tree) => tree?.type === selectedSectorModel
+            );
+            break;
 
-        case "ProdhimBimor":
-          additionalFilters = person.plantDetails.some(
-            (plant) => plant.type === selectedSectorModel
-          );
-          break;
+          case "Blegtori":
+            additionalFilters = person.livestockDetails.some(
+              (livestock) => livestock.type === selectedSectorModel
+            );
+            break;
 
-        case "Bletari":
-          additionalFilters = person.beeDetails.type === selectedSectorModel;
-          break;
+          case "ProdhimBimor":
+            additionalFilters = person.plantDetails.some(
+              (plant) => plant.type === selectedSectorModel
+            );
+            break;
 
-        default:
-          additionalFilters = true;
-          break;
+          case "Bletari":
+            additionalFilters = person.beeDetails.type === selectedSectorModel;
+            break;
+
+          default:
+            additionalFilters = true;
+            break;
+        }
       }
-    }
 
-    const finalMatch =
-      locationMatch &&
-      sectorTypeMatch &&
-      sectorModelMatch &&
-      searchMatch &&
-      additionalFilters;
+      // Combine all matching conditions
+      const finalMatch =
+        municipalityMatch &&
+        locationMatch &&
+        sectorTypeMatch &&
+        sectorModelMatch &&
+        searchMatch &&
+        additionalFilters;
 
-    return finalMatch;
-  });
+      return finalMatch;
+    })
+    .map((person) => {
+      // Add the total count as a new property for sorting
+      const totalItems =
+        person.treeDetails.reduce((sum, tree) => sum + tree.number, 0) +
+        person.livestockDetails.reduce(
+          (sum, livestock) => sum + livestock.number,
+          0
+        ) +
+        person.plantDetails.reduce((sum, plant) => sum + plant.number, 0) +
+        (person.beeDetails?.number || 0);
+
+      return { ...person, totalItems };
+    })
+    .sort((a, b) => b.totalItems - a.totalItems);
+
   const indexOfLastPerson = currentPage * personsPerPage;
   const indexOfFirstPerson = indexOfLastPerson - personsPerPage;
   const currentPersons = filteredPersons.slice(
@@ -179,8 +220,6 @@ function Persons() {
 
   const handleExportToExcel = () => {
     let data = filteredPersons?.length > 0 ? filteredPersons : persons;
-
-    const title = [["Personët"]];
 
     const headers = [
       [
@@ -195,6 +234,7 @@ function Persons() {
         "Përgatitja Shkollore",
         "Profesioni",
         "Numri i Anëtarëve të Familjes",
+        "Komuna",
         "Lokacioni",
         "Tokë në pronësi (hektarë ose m2)",
         "Tokë me qira (hektarë ose m2)",
@@ -246,12 +286,6 @@ function Persons() {
       const firstAvailableDetails =
         treeDetails || plantDetails || livestockDetails || beeDetails || "-";
 
-      console.log(
-        { treeDetails },
-        { plantDetails },
-        { livestockDetails },
-        { beeDetails }
-      );
       return [
         person.name || "-",
         person.parentName || "-",
@@ -266,6 +300,7 @@ function Persons() {
         person.educationLevel || "-",
         person.profession || "-",
         person.familyMembers || "-",
+        person.location?.municipality || "-",
         person.location?.location || "-",
         person.workingLandDetails?.ownedLand || "-",
         person.workingLandDetails?.rentedLand || "-",
@@ -362,17 +397,31 @@ function Persons() {
         <>
           <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold">Kërko nga emri</label>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearch}
-                className="border border-gray-300 rounded-lg p-2 w-full"
-              />
+              <label className="mb-2 font-semibold">Kërko nga komuna</label>
+              <select
+                value={selectedMunicipality}
+                onChange={(e) => {
+                  setSelectedMunicipality(e.target.value);
+                  setLocations(
+                    locations.filter(
+                      (location) => location?.municipality === e.target.value
+                    )
+                  );
+                }}
+                className="border p-2 mb-4 w-full"
+              >
+                <option value="">Zgjidhe komunen</option>
+                {municipalities.map((mun) => (
+                  <option key={mun} value={mun}>
+                    {mun}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col">
               <label className="mb-2 font-semibold">Kërko nga lokacioni</label>
               <select
+                disabled={!selectedMunicipality}
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
                 className="border rounded-lg p-2"
@@ -385,7 +434,6 @@ function Persons() {
                 ))}
               </select>
             </div>
-
             <div className="flex flex-col">
               <label className="mb-2 font-semibold">Kërko nga sektori</label>
               <select
@@ -424,11 +472,20 @@ function Persons() {
               </div>
             )}
           </div>
-          <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="flex flex-col">
+          <div className="flex flex-row items-end justify-between mb-4">
+            <div>
+              <label className="font-semibold">Kërko nga emri</label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearch}
+                className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+              />
+            </div>
+            <div>
               <button
                 onClick={handleExportToExcel}
-                className="border border-green-700 text-green-700  px-4 py-2 rounded mb-4"
+                className="border border-green-700 text-green-700  px-4 py-2 rounded "
               >
                 Eksporto ne Excel
               </button>
@@ -456,6 +513,7 @@ function Persons() {
                   Numri i Anëtarëve të Familjes
                 </th>
                 <th className="py-3 px-6 text-left">Lokacioni</th>
+                <th className="py-3 px-6 text-left">Komuna</th>
                 <th className="py-3 px-6 text-center">
                   Tokë në pronësi (hektarë ose m2)
                 </th>
@@ -498,6 +556,9 @@ function Persons() {
                   <td className="py-3 px-6">{person.familyMembers || "-"}</td>
                   <td className="py-3 px-6">
                     {person.location?.location || "-"}
+                  </td>
+                  <td className="py-3 px-6">
+                    {person.location?.municipality || "-"}
                   </td>
                   <td className="py-3 px-6">
                     {person.workingLandDetails?.ownedLand || "-"}
