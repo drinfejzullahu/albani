@@ -705,6 +705,10 @@ function Persons() {
                       <th className="border px-4 py-2">
                         Periudha e shfrytezimit
                       </th>
+                      <th className="border px-4 py-2">
+                        Certifikata e Pronësisë së Tokës - dëshmi vërtetimi i
+                        ekonomisë bujqësore
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -718,6 +722,9 @@ function Persons() {
                         </td>
                         <td className="border px-4 py-2">
                           {asset.period || "-"}
+                        </td>
+                        <td className="border px-4 py-2">
+                          {asset.proofDocument || "-"}
                         </td>
                       </tr>
                     ))}
