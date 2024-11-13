@@ -250,7 +250,10 @@ function Persons() {
       // Flatten arrays of objects (e.g., assets, investments, treeDetails, etc.)
       const assets =
         person.assets
-          ?.map((asset) => `Tipi: ${asset.assetType}, Sasia: ${asset.quantity}`)
+          ?.map(
+            (asset) =>
+              `Tipi: ${asset.assetType}, Sasia: ${asset.quantity}, Periudha: ${asset?.period}, Certifikata: ${asset?.proofDocument}`
+          )
           .join("; ") || "-";
       const investments =
         person.investments
