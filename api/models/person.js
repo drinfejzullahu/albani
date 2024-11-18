@@ -8,6 +8,7 @@ const InvestmentSchema = new mongoose.Schema({
 });
 
 const PersonSchema = new mongoose.Schema({
+  id: { type: Number },
   name: { type: String, required: true },
   parentName: { type: String },
   dateOfBirth: { type: Date, required: true },
