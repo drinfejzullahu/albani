@@ -20,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Persons />} />
           <Route path="/add-person" element={<AddPerson />} />
+          <Route path="/edit-person/:personId" element={<AddPerson />} />
           <Route path="/add-location" element={<AddLocation />} />
           <Route path="/add-section" element={<AddSection />} />
         </Routes>

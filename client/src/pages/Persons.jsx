@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
@@ -60,6 +61,8 @@ function Persons() {
   const [locations, setLocations] = useState([]);
   const [sections, setSections] = useState([]);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     axios
       .get("http://localhost:3000/api/persons")
@@ -115,6 +118,10 @@ function Persons() {
     } catch (error) {
       console.error("Error deleting person:", error);
     }
+  };
+
+  const handleEdit = async (personId) => {
+    navigate(`/edit-person/${personId}`);
   };
 
   const filteredPersons = persons
@@ -196,18 +203,20 @@ function Persons() {
     })
     .map((person) => {
       // Add the total count as a new property for sorting
-      const totalItems =
-        person.treeDetails.reduce((sum, tree) => sum + tree.number, 0) +
-        person.livestockDetails.reduce(
-          (sum, livestock) => sum + livestock.number,
-          0
-        ) +
-        person.plantDetails.reduce((sum, plant) => sum + plant.number, 0) +
-        (person.beeDetails?.number || 0);
+      const totalLand =
+        person?.workingLandDetails?.ownedLand +
+        person?.workingLandDetails?.rentedLand;
+      //person.treeDetails.reduce((sum, tree) => sum + tree.number, 0) +
+      //person.livestockDetails.reduce(
+      //  (sum, livestock) => sum + livestock.number,
+      //  0
+      //) +
+      //person.plantDetails.reduce((sum, plant) => sum + plant.number, 0) +
+      //(person.beeDetails?.number || 0);
 
-      return { ...person, totalItems };
+      return { ...person, totalLand };
     })
-    .sort((a, b) => b.totalItems - a.totalItems);
+    .sort((a, b) => b.totalLand - a.totalLand);
 
   const indexOfLastPerson = currentPage * personsPerPage;
   const indexOfFirstPerson = indexOfLastPerson - personsPerPage;
@@ -667,6 +676,12 @@ function Persons() {
                       className="text-red-500 hover:underline"
                     >
                       Fshij
+                    </button>
+                    <button
+                      onClick={() => handleEdit(person._id)}
+                      className="text-blue-500 hover:underline"
+                    >
+                      Edito
                     </button>
                   </td>
                 </tr>

@@ -1,7 +1,7 @@
 import { useFormik } from "formik";
 import axios from "axios";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 // Reusable Input Component
 const Input = ({ label, name, type = "text", value, onChange }) => (
@@ -27,7 +27,9 @@ export const sectorData = [
 ];
 
 function AddPersonAndAsset() {
+  const { personId } = useParams();
   const navigate = useNavigate();
+  const [personData, setPersonData] = useState(null);
 
   const [sections, setSections] = useState([]);
   const [selectedSector, setSelectedSector] = useState("");
@@ -44,6 +46,41 @@ function AddPersonAndAsset() {
   ]);
   const [treeDetails, setTreeDetails] = useState([{ type: "", number: "" }]);
   const [plantDetails, setPlantDetails] = useState([{ type: "", number: "" }]);
+
+  useEffect(() => {
+    const fetchPerson = async () => {
+      if (personId) {
+        try {
+          const response = await axios.get(
+            `http://localhost:3000/api/persons/${personId}`
+          );
+          const person = response.data;
+          setPersonData(person);
+
+          // Set state with fetched data, or use default values if empty
+          setAssets(
+            person.assets ?? [
+              { assetType: "", period: "", quantity: "", proofDocument: "" },
+            ]
+          );
+          setInvestments(
+            person.investments ?? [{ type: "", units: "", value: "", vat: "" }]
+          );
+          setLivestockDetails(
+            person.livestockDetails ?? [{ type: "", number: "" }]
+          );
+          setTreeDetails(person.treeDetails ?? [{ type: "", number: "" }]);
+          setPlantDetails(person.plantDetails ?? [{ type: "", number: "" }]);
+          setSelectedSector(personData?.sectorType);
+          setSelectedSection(personData?.sector);
+        } catch (error) {
+          console.error("Error fetching person:", error);
+        }
+      }
+    };
+
+    fetchPerson();
+  }, [personId]);
 
   useEffect(() => {
     const fetchSections = async (sectorType) => {
@@ -85,36 +122,40 @@ function AddPersonAndAsset() {
     return today.toISOString().split("T")[0];
   };
 
+  const formattedDateOfBirth = personData?.dateOfBirth
+    ? new Date(personData?.dateOfBirth).toISOString().split("T")[0]
+    : "";
+
   const formik = useFormik({
+    enableReinitialize: true,
     initialValues: {
-      name: "",
-      parentName: "",
-      dateOfBirth: "",
-      gender: "",
-      address: "",
-      phone: "",
-      email: "",
-      farmAddress: "",
-      educationLevel: "",
-      profession: "",
-      familyMembers: "",
-      location: "",
+      name: personData?.name || "",
+      parentName: personData?.parentName || "",
+      dateOfBirth: formattedDateOfBirth,
+      gender: personData?.gender || "",
+      address: personData?.address || "",
+      phone: personData?.phone || "",
+      email: personData?.email || "",
+      farmAddress: personData?.farmAddress || "",
+      educationLevel: personData?.educationLevel || "",
+      profession: personData?.profession || "",
+      familyMembers: personData?.familyMembers || "",
+      location: personData?.location || "",
       workingLandDetails: {
-        ownedLand: "",
-        rentedLand: "",
+        ownedLand: personData?.workingLandDetails?.ownedLand || "",
+        rentedLand: personData?.workingLandDetails?.rentedLand || "",
       },
-      livestockDetails: {
-        type: "",
-        number: "",
-      },
-      beeDetails: {
-        type: "",
-        number: "",
-      },
-      productsOrServices: "",
-      buyers: "",
-      expectations: "",
-      requests: "",
+      assets: personData?.assets || [],
+      investments: personData?.investments || [],
+      productsOrServices: personData?.productsOrServices || "",
+      buyers: personData?.buyers || "",
+      expectations: personData?.expectations || "",
+      requests: personData?.requests || "",
+      sectorType: personData?.sectorType || "",
+      sector: personData?.sector || "",
+      treeDetails: personData?.treeDetails || [],
+      livestockDetails: personData?.livestockDetails || [],
+      plantDetails: personData?.plantDetails || [],
     },
     onSubmit: async (values, { resetForm }) => {
       try {
@@ -127,21 +168,25 @@ function AddPersonAndAsset() {
           proofDocument: values.proofDocument,
           workingLandDetails: values.workingLandDetails,
           livestockDetails:
-            livestockDetails[0].type !== "" ? livestockDetails : undefined,
-          treeDetails: treeDetails[0].type !== "" ? treeDetails : undefined,
-          plantDetails: plantDetails[0].type !== "" ? plantDetails : undefined,
+            livestockDetails[0]?.type !== "" ? livestockDetails : undefined,
+          treeDetails: treeDetails[0]?.type !== "" ? treeDetails : undefined,
+          plantDetails: plantDetails[0]?.type !== "" ? plantDetails : undefined,
           beeDetails:
-            values.beeDetails.type !== "" ? values.beeDetails : undefined,
+            values?.beeDetails?.type !== "" ? values.beeDetails : undefined,
           assetsData: assets,
         };
 
-        await axios.post("http://localhost:3000/api/persons", personData);
+        if (personId) {
+          await axios.put(
+            `http://localhost:3000/api/persons/${personId}`,
+            personData
+          );
+        } else {
+          await axios.post("http://localhost:3000/api/persons", personData);
+        }
 
-        navigate("/");
         resetForm();
-        setAssets([
-          { assetType: "", period: "", quantity: "", proofDocument: "" },
-        ]);
+        navigate("/");
       } catch (error) {
         console.error("Error:", error);
       }
@@ -210,7 +255,9 @@ function AddPersonAndAsset() {
 
   return (
     <div className="p-60 pt-6 pb-20">
-      <h1 className="text-3xl font-bold text-center mb-6">Shto person</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">
+        {personId ? "Edito personin" : "Shto person"}
+      </h1>
 
       <form onSubmit={formik.handleSubmit} className="mb-6 flex flex-col gap-4">
         {/* Person Details */}
@@ -711,7 +758,7 @@ function AddPersonAndAsset() {
           type="submit"
           className="border-green-700 border text-green-700 bg-transparent px-4 py-2 rounded-lg mt-4 w-fit min-w-[200px]"
         >
-          Shto personin
+          {personId ? "Edito personin" : "Shto personin"}
         </button>
       </form>
     </div>
