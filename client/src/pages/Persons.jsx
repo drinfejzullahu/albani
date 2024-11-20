@@ -223,6 +223,7 @@ function Persons() {
 
     const headers = [
       [
+        "Id",
         "Emri dhe mbiemri",
         "Emri i prindit",
         "Datëlindja",
@@ -238,6 +239,7 @@ function Persons() {
         "Lokacioni",
         "Tokë në pronësi (hektarë ose m2)",
         "Tokë me qira (hektarë ose m2)",
+        "Prodhimet e Planifikuara për Zgjerim",
         "Tipi i sektorit",
         "Sektori",
         "Asetet",
@@ -290,6 +292,7 @@ function Persons() {
         treeDetails || plantDetails || livestockDetails || beeDetails || "-";
 
       return [
+        person.id || "-",
         person.name || "-",
         person.parentName || "-",
         person.dateOfBirth
@@ -307,6 +310,7 @@ function Persons() {
         person.location?.location || "-",
         person.workingLandDetails?.ownedLand || "-",
         person.workingLandDetails?.rentedLand || "-",
+        person.productsOrServices || "-",
         person.sectorType || "-",
         person.sector || "-",
         assets,
@@ -502,6 +506,7 @@ function Persons() {
           <table className="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead>
               <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                <th className="py-3 px-6 text-left">Id</th>
                 <th className="py-3 px-6 text-left">Emri dhe mbiemri</th>
                 <th className="py-3 px-6 text-left">Emri i prindit</th>
                 <th className="py-3 px-6 text-left">Datëlindja</th>
@@ -523,6 +528,9 @@ function Persons() {
                 <th className="py-3 px-6 text-center">
                   Tokë me qira (hektarë ose m2)
                 </th>
+                <th className="py-3 px-6 text-center">
+                  Prodhimet e Planifikuara për Zgjerim
+                </th>
                 <th className="py-3 px-6 text-left">Tipi i sektorit</th>
                 <th className="py-3 px-6 text-left">Sektori</th>
                 <th className="py-3 px-6 text-center">Asetet</th>
@@ -538,6 +546,7 @@ function Persons() {
                   key={person._id}
                   className="border-b border-gray-200 hover:bg-gray-50"
                 >
+                  <td className="py-3 px-6">{person.id || "-"}</td>
                   <td className="py-3 px-6">{person.name || "-"}</td>
                   <td className="py-3 px-6">{person.parentName || "-"}</td>
                   <td className="py-3 px-6">
@@ -568,6 +577,9 @@ function Persons() {
                   </td>
                   <td className="py-3 px-6">
                     {person.workingLandDetails?.rentedLand || "-"}
+                  </td>
+                  <td className="py-3 px-6">
+                    {person.productsOrServices || "-"}
                   </td>
                   <td className="py-3 px-6">{person.sectorType || "-"}</td>
                   <td className="py-3 px-6">{person.sector || "-"}</td>
