@@ -30,6 +30,11 @@ const BletariSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+const ShpeztariSchema = new mongoose.Schema({
+  name: { type: String, default: "Shpeztari" },
+  createdAt: { type: Date, default: Date.now },
+});
+
 // Exporting the sector models
 const Bujqesi = mongoose.model("Bujqesi", BujqesiSchema);
 const Blegtori = mongoose.model("Blegtori", BlegtoriSchema);
@@ -40,6 +45,7 @@ const AgroBiznesFamiljar = mongoose.model(
   AgroBiznesFamiljarSchema
 );
 const Bletari = mongoose.model("Bletari", BletariSchema);
+const Shpeztari = mongoose.model("Shpeztari", ShpeztariSchema);
 
 export {
   Bujqesi,
@@ -48,4 +54,5 @@ export {
   ProdhimBimor,
   AgroBiznesFamiljar,
   Bletari,
+  Shpeztari,
 };

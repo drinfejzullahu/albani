@@ -10,6 +10,7 @@ const sectorData = [
   { name: "ProdhimBimor" },
   { name: "AgroBiznesFamiljar" },
   { name: "Bletari" },
+  { name: "Shpeztari" },
 ];
 
 const municipalities = ["Bujanoci", "Presheva", "Medvegja"];
@@ -141,6 +142,8 @@ function Persons() {
       );
       const beeTotal = person.beeDetails?.number || 0;
 
+      const birdTotal = person.birdDetails?.number || 0;
+
       // Define matching conditions for each filter
       const municipalityMatch = selectedMunicipality
         ? person.location?.municipality === selectedMunicipality
@@ -182,6 +185,12 @@ function Persons() {
 
           case "Bletari":
             additionalFilters = person.beeDetails.type === selectedSectorModel;
+            break;
+
+          case "Shpeztari":
+            additionalFilters = person.birdDetails.some(
+              (bird) => bird?.type === selectedSectorModel
+            );
             break;
 
           default:
@@ -297,8 +306,15 @@ function Persons() {
 
       const beeDetails = `Tipi: ${person?.beeDetails?.type}, Numri: ${person?.beeDetails?.number}`;
 
+      const birdDetails = `Tipi: ${person?.birdDetails?.type}, Numri: ${person?.birdDetails?.number}`;
+
       const firstAvailableDetails =
-        treeDetails || plantDetails || livestockDetails || beeDetails || "-";
+        treeDetails ||
+        plantDetails ||
+        livestockDetails ||
+        beeDetails ||
+        birdDetails ||
+        "-";
 
       return [
         person.id || "-",
@@ -667,6 +683,19 @@ function Persons() {
                         className="bg-orange-500 text-white px-4 py-2 rounded mx-2"
                       >
                         Detajet e Bletarise
+                      </button>
+                    )}
+                    {person.birdDetails.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setShowDetailsModal({
+                            type: "Shpeztari",
+                            data: person.birdDetails,
+                          });
+                        }}
+                        className="bg-yellow-500 text-white px-4 py-2 rounded mx-2"
+                      >
+                        Detajet e Shpeztarise
                       </button>
                     )}
                   </td>

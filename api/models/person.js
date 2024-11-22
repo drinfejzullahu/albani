@@ -47,6 +47,7 @@ const PersonSchema = new mongoose.Schema({
       "ProdhimBimor",
       "AgroBiznesFamiljar",
       "Bletari",
+      "Shpeztari",
     ],
     required: true,
   },
@@ -77,6 +78,12 @@ const PersonSchema = new mongoose.Schema({
     number: { type: Number },
     type: { type: String },
   },
+  birdDetails: [
+    {
+      number: { type: Number },
+      type: { type: String },
+    },
+  ],
   location: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Location",

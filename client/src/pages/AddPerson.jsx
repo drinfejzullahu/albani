@@ -24,6 +24,7 @@ export const sectorData = [
   { name: "ProdhimBimor" },
   { name: "AgroBiznesFamiljar" },
   { name: "Bletari" },
+  { name: "Shpeztari" },
 ];
 
 function AddPersonAndAsset() {
@@ -45,6 +46,7 @@ function AddPersonAndAsset() {
     { type: "", number: "" },
   ]);
   const [treeDetails, setTreeDetails] = useState([{ type: "", number: "" }]);
+  const [birdDetails, setBirdDetails] = useState([{ type: "", number: "" }]);
   const [plantDetails, setPlantDetails] = useState([{ type: "", number: "" }]);
 
   useEffect(() => {
@@ -70,6 +72,7 @@ function AddPersonAndAsset() {
             person.livestockDetails ?? [{ type: "", number: "" }]
           );
           setTreeDetails(person.treeDetails ?? [{ type: "", number: "" }]);
+          setBirdDetails(person.birdDetails ?? [{ type: "", number: "" }]);
           setPlantDetails(person.plantDetails ?? [{ type: "", number: "" }]);
           setSelectedSector(personData?.sectorType);
           setSelectedSection(personData?.sector);
@@ -154,6 +157,7 @@ function AddPersonAndAsset() {
       sectorType: personData?.sectorType || "",
       sector: personData?.sector || "",
       treeDetails: personData?.treeDetails || [],
+      birdDetails: personData?.birdDetails || [],
       livestockDetails: personData?.livestockDetails || [],
       plantDetails: personData?.plantDetails || [],
     },
@@ -170,6 +174,7 @@ function AddPersonAndAsset() {
           livestockDetails:
             livestockDetails[0]?.type !== "" ? livestockDetails : undefined,
           treeDetails: treeDetails[0]?.type !== "" ? treeDetails : undefined,
+          birdDetails: birdDetails[0]?.type !== "" ? birdDetails : undefined,
           plantDetails: plantDetails[0]?.type !== "" ? plantDetails : undefined,
           beeDetails:
             values?.beeDetails?.type !== "" ? values.beeDetails : undefined,
@@ -235,6 +240,16 @@ function AddPersonAndAsset() {
   };
   const addTreeDetails = () => {
     setTreeDetails([...treeDetails, { number: "", type: "" }]);
+  };
+
+  const handleBirdDetailsChange = (index, field, value) => {
+    const newBirdDetails = [...birdDetails];
+    newBirdDetails[index][field] = value;
+    setBirdDetails(newBirdDetails);
+  };
+
+  const addBirdDetails = () => {
+    setBirdDetails([...birdDetails, { number: "", type: "" }]);
   };
 
   const handlePlantDetailsChange = (index, field, value) => {
@@ -421,9 +436,13 @@ function AddPersonAndAsset() {
 
           {/* Sections based on selected sector */}
           {sections.length > 0 &&
-            !["Blegtori", "Bletari", "Pemetari", "ProdhimBimor"].includes(
-              selectedSector
-            ) && (
+            ![
+              "Blegtori",
+              "Bletari",
+              "Shpeztari",
+              "Pemetari",
+              "ProdhimBimor",
+            ].includes(selectedSector) && (
               <div className="flex flex-col">
                 <label className="mb-2 font-semibold">Zgjidhe seksionin</label>
                 <select
@@ -615,6 +634,56 @@ function AddPersonAndAsset() {
             </div>
           </div>
         ) : null}
+
+        {selectedSector === "Shpeztari" &&
+          birdDetails.map((bird, index) => (
+            <div key={index} className="border rounded-lg p-4">
+              <div
+                key={index}
+                className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2"
+              >
+                {sections.length > 0 && (
+                  <div className="flex flex-col">
+                    <select
+                      name={`birdDetails.type-${index}`}
+                      value={bird.type}
+                      onChange={(e) =>
+                        handleBirdDetailsChange(index, "type", e.target.value)
+                      }
+                      className="border border-gray-300 rounded-lg p-2 w-full"
+                    >
+                      <option value="">Lloji</option>
+                      {sections.map((section) => (
+                        <option key={section._id} value={section.name}>
+                          {section.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <input
+                  type="number"
+                  name={`birdDetails.number-${index}`}
+                  value={bird.number}
+                  onChange={(e) =>
+                    handleBirdDetailsChange(index, "number", e.target.value)
+                  }
+                  placeholder="Numri"
+                  className="border border-gray-300 rounded-lg p-2 w-full"
+                />
+              </div>
+            </div>
+          ))}
+        {selectedSector === "Shpeztari" && (
+          <button
+            type="button"
+            onClick={addBirdDetails}
+            className="border-blue-500 border text-blue-500 bg-transparent px-4 py-2 rounded-lg mt-2 w-fit min-w-[200px] mb-4"
+          >
+            Shto
+          </button>
+        )}
         <h2 className="text-xl font-semibold mt-4">Asetet</h2>
         {assets.map((asset, index) => (
           <div key={index} className="border rounded-lg p-4">
