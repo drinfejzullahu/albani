@@ -617,7 +617,7 @@ function AddPersonAndAsset() {
               <input
                 type="text"
                 name="beeDetails.type"
-                value={formik.values.beeDetails.type}
+                value={formik.values?.beeDetails?.type}
                 onChange={formik.handleChange}
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
@@ -627,7 +627,7 @@ function AddPersonAndAsset() {
               <input
                 type="number"
                 name="beeDetails.number"
-                value={formik.values.beeDetails.number}
+                value={formik.values?.beeDetails?.number}
                 onChange={formik.handleChange}
                 className="border border-gray-300 rounded-lg p-2 w-full"
               />
