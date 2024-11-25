@@ -111,6 +111,11 @@ function Persons() {
   };
 
   const handleDelete = async (personId) => {
+    const isConfirmed = window.confirm(
+      "A je i sigurt që dëshiron të fshish këtë person?"
+    );
+    if (!isConfirmed) return;
+
     try {
       await axios.delete(`http://localhost:3000/api/persons/${personId}`);
       setPersons((prevPersons) =>
@@ -212,20 +217,19 @@ function Persons() {
     })
     .map((person) => {
       // Add the total count as a new property for sorting
-      const totalLand =
-        person?.workingLandDetails?.ownedLand +
-        person?.workingLandDetails?.rentedLand;
-      //person.treeDetails.reduce((sum, tree) => sum + tree.number, 0) +
-      //person.livestockDetails.reduce(
-      //  (sum, livestock) => sum + livestock.number,
-      //  0
-      //) +
-      //person.plantDetails.reduce((sum, plant) => sum + plant.number, 0) +
-      //(person.beeDetails?.number || 0);
+      const totalItems =
+        person.treeDetails.reduce((sum, tree) => sum + tree.number, 0) +
+        person.livestockDetails.reduce(
+          (sum, livestock) => sum + livestock.number,
+          0
+        ) +
+        person.plantDetails.reduce((sum, plant) => sum + plant.number, 0) +
+        person.birdDetails.reduce((sum, plant) => sum + plant.number, 0) +
+        (person.beeDetails?.number || 0);
 
-      return { ...person, totalLand };
+      return { ...person, totalItems };
     })
-    .sort((a, b) => b.totalLand - a.totalLand);
+    .sort((a, b) => b.totalItems - a.totalItems);
 
   const indexOfLastPerson = currentPage * personsPerPage;
   const indexOfFirstPerson = indexOfLastPerson - personsPerPage;
@@ -421,6 +425,7 @@ function Persons() {
       `Personet.${new Date().toLocaleDateString()}.xlsx`
     );
   };
+
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Lista e personëve</h1>
@@ -705,7 +710,7 @@ function Persons() {
                       className="text-red-500 hover:underline"
                     >
                       Fshij
-                    </button>
+                    </button>{" "}
                     <button
                       onClick={() => handleEdit(person._id)}
                       className="text-blue-500 hover:underline"
