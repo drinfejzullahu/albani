@@ -310,7 +310,12 @@ function Persons() {
 
       const beeDetails = `Tipi: ${person?.beeDetails?.type}, Numri: ${person?.beeDetails?.number}`;
 
-      const birdDetails = `Tipi: ${person?.birdDetails?.type}, Numri: ${person?.birdDetails?.number}`;
+      const birdDetails =
+        (person.birdDetails?.length > 0 &&
+          person?.birdDetails
+            ?.map((bird) => `Tipi: ${bird.type}, Numri: ${bird.number}`)
+            .join("; ")) ||
+        undefined;
 
       const firstAvailableDetails =
         treeDetails ||
