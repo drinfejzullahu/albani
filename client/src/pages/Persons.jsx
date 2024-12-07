@@ -208,16 +208,27 @@ function Persons() {
     birdTotals: groupAndSumByType(
       filteredPersons.flatMap((p) => p.birdDetails)
     ),
+    landTotals: {
+      ownedLand: filteredPersons.reduce(
+        (sum, p) => sum + (p.workingLandDetails?.ownedLand || 0),
+        0
+      ),
+      rentedLand: filteredPersons.reduce(
+        (sum, p) => sum + (p.workingLandDetails?.rentedLand || 0),
+        0
+      ),
+    },
   };
 
   // Filter out any category where all totals are 0
   const filteredGroupedTotals = Object.fromEntries(
     Object.entries(groupedTotals).filter(([key, value]) => {
-      return Object.values(value).some((total) => total > 0);
+      if (typeof value === "object") {
+        return Object.values(value).some((total) => total > 0);
+      }
+      return value > 0;
     })
   );
-
-  console.log(groupedTotals, "TTTTTTTTT");
 
   const indexOfLastPerson = currentPage * personsPerPage;
   const indexOfFirstPerson = indexOfLastPerson - personsPerPage;

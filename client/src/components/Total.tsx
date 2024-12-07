@@ -15,9 +15,20 @@ const typeMapper: TypeMapperItem[] = [
   { type: "plant", label: "ProdhimBimor" },
   { type: "bee", label: "Bletari" },
   { type: "bird", label: "Shpezetari" },
+  { type: "land", label: "Toka (m2)" },
+  { type: "ownedLand", label: "Ne pronesi" }, // Special label for owned land
+  { type: "rentedLand", label: "Me qira" }, // Special label for rented land
 ];
 
 const getLabelForType = (type: string): string => {
+  // Check for specific cases for land types first
+  if (type === "ownedLand") {
+    return "Ne pronesi";
+  }
+  if (type === "rentedLand") {
+    return "Me qira";
+  }
+
   const mapping = typeMapper.find((item) => item.type === type);
   return mapping ? mapping.label : type; // Return the type as a fallback if not found
 };
