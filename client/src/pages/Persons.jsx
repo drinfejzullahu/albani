@@ -1,51 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import * as XLSX from "xlsx";
-
-const sectorData = [
-  { name: "Bujqesi" },
-  { name: "Blegtori" },
-  { name: "Pemetari" },
-  { name: "ProdhimBimor" },
-  { name: "AgroBiznesFamiljar" },
-  { name: "Bletari" },
-  { name: "Shpeztari" },
-];
-
-const municipalities = ["Bujanoci", "Presheva", "Medvegja"];
-
-const DetailsModal = ({ type, data, onClose }) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-      <div className="bg-white p-4 rounded-lg">
-        <h2 className="font-semibold mb-4">Detajet e {type} </h2>
-        <table className="min-w-full text-sm border w-[400px]">
-          <thead>
-            <tr>
-              <th className="border px-4 py-2">Tipi</th>
-              <th className="border px-4 py-2">Sasia</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((details, index) => (
-              <tr key={index}>
-                <td className="border px-4 py-2">{details.type || "-"}</td>
-                <td className="border px-4 py-2">{details.number || "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <button
-          onClick={onClose}
-          className="bg-blue-500 text-white p-2 rounded mt-4"
-        >
-          Mbylle
-        </button>
-      </div>
-    </div>
-  );
-};
+import DetailsModal from "../components/modals/Details";
+import { sectorData } from "../data_types/sector";
+import { handleExportToExcel } from "../helpers/excel";
+import { groupAndSumByType } from "../helpers/common";
+import TotalsCard from "../components/Total";
+import { municipalities } from "../data_types/common";
 
 function Persons() {
   const [persons, setPersons] = useState([]);
@@ -231,6 +192,33 @@ function Persons() {
     })
     .sort((a, b) => b.totalItems - a.totalItems);
 
+  const groupedTotals = {
+    treeTotals: groupAndSumByType(
+      filteredPersons.flatMap((p) => p.treeDetails)
+    ),
+    livestockTotals: groupAndSumByType(
+      filteredPersons.flatMap((p) => p.livestockDetails)
+    ),
+    plantTotals: groupAndSumByType(
+      filteredPersons.flatMap((p) => p.plantDetails)
+    ),
+    beeTotals: groupAndSumByType(
+      filteredPersons.map((p) => p.beeDetails).filter(Boolean)
+    ),
+    birdTotals: groupAndSumByType(
+      filteredPersons.flatMap((p) => p.birdDetails)
+    ),
+  };
+
+  // Filter out any category where all totals are 0
+  const filteredGroupedTotals = Object.fromEntries(
+    Object.entries(groupedTotals).filter(([key, value]) => {
+      return Object.values(value).some((total) => total > 0);
+    })
+  );
+
+  console.log(groupedTotals, "TTTTTTTTT");
+
   const indexOfLastPerson = currentPage * personsPerPage;
   const indexOfFirstPerson = indexOfLastPerson - personsPerPage;
   const currentPersons = filteredPersons.slice(
@@ -240,201 +228,9 @@ function Persons() {
 
   const totalPages = Math.ceil(filteredPersons.length / personsPerPage);
 
-  const handleExportToExcel = () => {
-    let data = filteredPersons?.length > 0 ? filteredPersons : persons;
-
-    const headers = [
-      [
-        "Id",
-        "Emri dhe mbiemri",
-        "Emri i prindit",
-        "Datëlindja",
-        "Gjinia",
-        "Numri i telefonit",
-        "Email",
-        "Adresa e fermës",
-        "Adresa personale",
-        "Përgatitja Shkollore",
-        "Profesioni",
-        "Numri i Anëtarëve të Familjes",
-        "Komuna",
-        "Lokacioni",
-        "Tokë në pronësi (hektarë ose m2)",
-        "Tokë me qira (hektarë ose m2)",
-        "Prodhimet e Planifikuara për Zgjerim",
-        "Tipi i sektorit",
-        "Sektori",
-        "Asetet",
-        "Investimet",
-        "Detajet",
-      ],
-    ];
-
-    const exportData = data.map((person) => {
-      // Flatten arrays of objects (e.g., assets, investments, treeDetails, etc.)
-      const assets =
-        person.assets
-          ?.map(
-            (asset) =>
-              `Tipi: ${asset.assetType}, Sasia: ${asset.quantity}, Periudha: ${asset?.period}, Certifikata: ${asset?.proofDocument}`
-          )
-          .join("; ") || "-";
-      const investments =
-        person.investments
-          ?.map(
-            (investment) =>
-              `Tipi: ${investment.type}, Sasia: ${investment.units}, Vlera: ${investment.value}`
-          )
-          .join("; ") || "-";
-      const treeDetails =
-        (person.treeDetails.length > 0 &&
-          person.treeDetails
-            ?.map((tree) => `Tipi: ${tree.type}, Numri: ${tree.number}`)
-            .join("; ")) ||
-        undefined;
-      const livestockDetails =
-        (person.livestockDetails.length > 0 &&
-          person.livestockDetails
-            ?.map(
-              (livestock) =>
-                `Tipi: ${livestock.type}, Numri: ${livestock.number}`
-            )
-            .join("; ")) ||
-        undefined;
-      const plantDetails =
-        (person.plantDetails?.length > 0 &&
-          person?.plantDetails
-            ?.map((plant) => `Tipi: ${plant.type}, Numri: ${plant.number}`)
-            .join("; ")) ||
-        undefined;
-
-      const beeDetails = `Tipi: ${person?.beeDetails?.type}, Numri: ${person?.beeDetails?.number}`;
-
-      const birdDetails =
-        (person.birdDetails?.length > 0 &&
-          person?.birdDetails
-            ?.map((bird) => `Tipi: ${bird.type}, Numri: ${bird.number}`)
-            .join("; ")) ||
-        undefined;
-
-      const firstAvailableDetails =
-        treeDetails ||
-        plantDetails ||
-        livestockDetails ||
-        beeDetails ||
-        birdDetails ||
-        "-";
-
-      return [
-        person.id || "-",
-        person.name || "-",
-        person.parentName || "-",
-        person.dateOfBirth
-          ? new Date(person.dateOfBirth).toLocaleDateString()
-          : "-",
-        person.gender === "m" ? "Burrë" : "Grua",
-        person.phone || "-",
-        person.email || "-",
-        person.farmAddress || "-",
-        person.address || "-",
-        person.educationLevel || "-",
-        person.profession || "-",
-        person.familyMembers || "-",
-        person.location?.municipality || "-",
-        person.location?.location || "-",
-        person.workingLandDetails?.ownedLand || "-",
-        person.workingLandDetails?.rentedLand || "-",
-        person.productsOrServices || "-",
-        person.sectorType || "-",
-        person.sector || "-",
-        assets,
-        investments,
-        firstAvailableDetails,
-      ];
-    });
-
-    const worksheet = XLSX.utils.aoa_to_sheet([["Personët"]]); // Set title in first row
-    XLSX.utils.sheet_add_aoa(worksheet, headers, { origin: "A2" }); // Headers start on the 2nd row
-    XLSX.utils.sheet_add_aoa(worksheet, exportData, { origin: "A3" }); // Data starts on the 3rd row
-
-    // Create the workbook and append the worksheet
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Personët");
-
-    // Applying styles
-    worksheet["A1"].s = {
-      font: { bold: true, sz: 18 },
-      alignment: { horizontal: "center", vertical: "center" },
-    };
-
-    // Merge title row to center the title across all columns
-    const endColumn = String.fromCharCode(
-      "A".charCodeAt(0) + headers[0].length - 1
-    );
-    worksheet["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: headers[0].length - 1 } },
-    ];
-
-    // Style headers
-    headers[0].forEach((_, index) => {
-      const cellAddress = XLSX.utils.encode_cell({ r: 1, c: index });
-      if (worksheet[cellAddress]) {
-        worksheet[cellAddress].s = {
-          font: { bold: true, sz: 12 },
-          fill: { fgColor: { rgb: "D9E1F2" } },
-          alignment: { horizontal: "center", vertical: "center" },
-          border: {
-            top: { style: "thin", color: { rgb: "000000" } },
-            bottom: { style: "thin", color: { rgb: "000000" } },
-            left: { style: "thin", color: { rgb: "000000" } },
-            right: { style: "thin", color: { rgb: "000000" } },
-          },
-        };
-      }
-    });
-
-    // Style data rows
-    exportData.forEach((row, rowIndex) => {
-      row.forEach((_, colIndex) => {
-        const cellAddress = XLSX.utils.encode_cell({
-          r: rowIndex + 2,
-          c: colIndex,
-        });
-        if (worksheet[cellAddress]) {
-          worksheet[cellAddress].s = {
-            alignment: { horizontal: "center", vertical: "center" },
-            border: {
-              top: { style: "thin", color: { rgb: "CCCCCC" } },
-              bottom: { style: "thin", color: { rgb: "CCCCCC" } },
-              left: { style: "thin", color: { rgb: "CCCCCC" } },
-              right: { style: "thin", color: { rgb: "CCCCCC" } },
-            },
-          };
-        }
-      });
-    });
-
-    // Auto-fit column widths
-    const colWidths = headers[0].map((header, index) => {
-      const maxLength = Math.max(
-        ...exportData.map((row) => row[index]?.toString().length || 0),
-        header.length
-      );
-      return { wch: Math.max(maxLength + 2, 10) }; // Minimum width of 10
-    });
-    worksheet["!cols"] = colWidths;
-
-    // Export workbook
-    XLSX.writeFile(
-      workbook,
-      `Personet.${new Date().toLocaleDateString()}.xlsx`
-    );
-  };
-
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Lista e personëve</h1>
-
       {currentPersons.length > 0 ? (
         <>
           <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -526,7 +322,11 @@ function Persons() {
             </div>
             <div>
               <button
-                onClick={handleExportToExcel}
+                onClick={() =>
+                  handleExportToExcel(
+                    filteredPersons?.length > 0 ? filteredPersons : persons
+                  )
+                }
                 className="border border-green-700 text-green-700  px-4 py-2 rounded "
               >
                 Eksporto ne Excel
@@ -535,7 +335,6 @@ function Persons() {
           </div>
         </>
       ) : null}
-
       <div className="overflow-x-auto">
         {currentPersons.length > 0 ? (
           <table className="min-w-full bg-white border border-gray-200 rounded-lg">
@@ -732,23 +531,7 @@ function Persons() {
         )}
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center mt-6">
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i + 1}
-            onClick={() => setCurrentPage(i + 1)}
-            className={`mx-1 px-3 py-1 rounded-lg ${
-              currentPage === i + 1
-                ? "bg-blue-500 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
-
+      <TotalsCard totals={filteredGroupedTotals} />
       {showDetailsModal && (
         <DetailsModal
           type={showDetailsModal.type}
@@ -757,6 +540,77 @@ function Persons() {
         />
       )}
 
+      {/* Pagination */}
+      <div className="flex justify-center mt-6 space-x-1">
+        {/* Previous Button */}
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          className={`px-3 py-1 rounded-lg ${
+            currentPage === 1
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+          disabled={currentPage === 1}
+        >
+          Mbrapa
+        </button>
+
+        {/* Page Numbers */}
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter((page) => {
+            // Only show the first, last, current, and neighboring pages
+            if (
+              page === 1 ||
+              page === totalPages ||
+              (page >= currentPage - 1 && page <= currentPage + 1)
+            ) {
+              return true;
+            }
+            return false;
+          })
+          .reduce((acc, page, index, arr) => {
+            // Add ellipsis if there is a gap between consecutive pages
+            if (index > 0 && page !== arr[index - 1] + 1) {
+              acc.push("...");
+            }
+            acc.push(page);
+            return acc;
+          }, [])
+          .map((page, index) =>
+            typeof page === "number" ? (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded-lg ${
+                  currentPage === page
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {page}
+              </button>
+            ) : (
+              <span key={index} className="px-3 py-1 text-gray-500">
+                ...
+              </span>
+            )
+          )}
+
+        {/* Next Button */}
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          className={`px-3 py-1 rounded-lg ${
+            currentPage === totalPages
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+          disabled={currentPage === totalPages}
+        >
+          Para
+        </button>
+      </div>
       {/* Assets Modal */}
       {showAssetsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -812,7 +666,6 @@ function Persons() {
           </div>
         </div>
       )}
-
       {/* Investments Modal */}
       {showInvestmentsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">

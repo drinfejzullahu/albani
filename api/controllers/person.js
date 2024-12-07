@@ -35,8 +35,15 @@ const createPerson = async (request, reply) => {
   try {
     const { assetsData } = request.body;
 
+    // Get the highest existing `id` in the collection
+    const lastPerson = await Person.findOne().sort({ id: -1 }).select("id");
+
+    const newId = lastPerson?.id ? lastPerson.id + 1 : 1; // Increment or start from 1
+
+    // Create a new person with the incremented `id`
     const person = new Person({
       ...request.body,
+      id: newId,
     });
 
     await person.save();
@@ -54,8 +61,6 @@ const createPerson = async (request, reply) => {
     }
 
     reply.code(201).send(person);
-    await person.save();
-    reply.code(201).send(person); // Fastify response handling
   } catch (error) {
     reply.code(400).send({ error: "Bad Request", message: error.message });
   }

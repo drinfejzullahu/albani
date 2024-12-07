@@ -2,30 +2,8 @@ import { useFormik } from "formik";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-// Reusable Input Component
-const Input = ({ label, name, type = "text", value, onChange }) => (
-  <div className="flex flex-col">
-    <label className="mb-2 font-semibold">{label}</label>
-    <input
-      type={type}
-      name={name}
-      value={value}
-      onChange={onChange}
-      className="border border-gray-300 rounded-lg p-2 w-full"
-    />
-  </div>
-);
-
-export const sectorData = [
-  { name: "Bujqesi" },
-  { name: "Blegtori" },
-  { name: "Pemetari" },
-  { name: "ProdhimBimor" },
-  { name: "AgroBiznesFamiljar" },
-  { name: "Bletari" },
-  { name: "Shpeztari" },
-];
+import { sectorData } from "../data_types/sector";
+import Input from "../components/Input";
 
 function AddPersonAndAsset() {
   const { personId } = useParams();

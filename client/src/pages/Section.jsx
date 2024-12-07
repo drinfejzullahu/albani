@@ -68,7 +68,7 @@
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import axios from "axios";
-import { sectorData } from "./AddPerson";
+import { sectorData } from "../data_types/sector";
 
 function AddSection() {
   const [sections, setSections] = useState([]);
