@@ -74,6 +74,7 @@ function AddSection() {
   const [sections, setSections] = useState([]);
   const [selectedSector, setSelectedSector] = useState("");
   const [editingSectionId, setEditingSectionId] = useState(null);
+  const [addSection, setAddSection] = useState(false);
 
   const fetchSections = async (sectorType) => {
     try {
@@ -158,6 +159,34 @@ function AddSection() {
     <div className="p-60 pt-6 pb-20">
       <h1 className="text-3xl font-bold text-center mb-6">Seksionet</h1>
 
+      <h2 className="font-bold mb-2">Shto ose edito nje seksion</h2>
+      {addSection ? (
+        <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
+          <input
+            type="text"
+            name="sectorName"
+            value={formik.values.sectorName}
+            onChange={formik.handleChange}
+            placeholder="Emri i seksionit"
+            className="border border-gray-300 rounded-lg p-2 w-full"
+          />
+
+          <button
+            type="submit"
+            className="border-blue-500 border text-blue-500 bg-transparent px-4 py-2 rounded-lg mt-2 w-fit min-w-[200px] mb-10"
+          >
+            {editingSectionId ? "Ndrysho seksionin" : "Shto seksionin"}
+          </button>
+        </form>
+      ) : (
+        <button
+          className="border-blue-500 border text-blue-500 bg-transparent px-4 py-2 rounded-lg mt-2 w-fit min-w-[200px] mb-10"
+          onClick={() => setAddSection(true)}
+        >
+          Shto seksion te ri
+        </button>
+      )}
+
       {/* Sector Selection Dropdown */}
       <select
         value={selectedSector}
@@ -202,25 +231,6 @@ function AddSection() {
           ))}
         </tbody>
       </table>
-
-      <h2 className="font-bold mb-2">Shto ose edito nje seksion</h2>
-      <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="text"
-          name="sectorName"
-          value={formik.values.sectorName}
-          onChange={formik.handleChange}
-          placeholder="Emri i seksionit"
-          className="border border-gray-300 rounded-lg p-2 w-full"
-        />
-
-        <button
-          type="submit"
-          className="border-blue-500 border text-blue-500 bg-transparent px-4 py-2 rounded-lg mt-2 w-fit min-w-[200px]"
-        >
-          {editingSectionId ? "Ndrysho seksionin" : "Shto seksionin"}
-        </button>
-      </form>
     </div>
   );
 }

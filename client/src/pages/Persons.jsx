@@ -10,6 +10,7 @@ import { municipalities } from "../data_types/common";
 
 function Persons() {
   const [persons, setPersons] = useState([]);
+  const [filteredPersons, setFilteredPersons] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [personsPerPage] = useState(12);
@@ -66,6 +67,16 @@ function Persons() {
     fetchDefaultSections();
   }, [selectedSectorType]);
 
+  useEffect(() => {
+    filterPersons();
+  }, [
+    selectedMunicipality,
+    selectedLocation,
+    selectedSectorType,
+    selectedSectorModel,
+    searchQuery,
+  ]);
+
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
@@ -91,106 +102,94 @@ function Persons() {
     navigate(`/edit-person/${personId}`);
   };
 
-  const filteredPersons = persons
-    .filter((person) => {
-      // Calculate the total count for tree, livestock, plant, and bee details
-      const treeTotal = person.treeDetails.reduce(
-        (sum, tree) => sum + tree.number,
-        0
-      );
-      const livestockTotal = person.livestockDetails.reduce(
-        (sum, livestock) => sum + livestock.number,
-        0
-      );
-      const plantTotal = person.plantDetails.reduce(
-        (sum, plant) => sum + plant.number,
-        0
-      );
-      const beeTotal = person.beeDetails?.number || 0;
+  const filterPersons = () => {
+    const updatedPersons = persons
+      .filter((person) => {
+        const municipalityMatch = selectedMunicipality
+          ? person.location?.municipality === selectedMunicipality
+          : true;
+        const locationMatch = selectedLocation
+          ? person.location?._id === selectedLocation
+          : true;
+        const sectorTypeMatch = selectedSectorType
+          ? person.sectorType === selectedSectorType
+          : true;
+        const sectorModelMatch = selectedSectorModel
+          ? person.sector === selectedSectorModel
+          : true;
+        const searchMatch = searchQuery
+          ? person.name.toLowerCase().includes(searchQuery.toLowerCase())
+          : true;
 
-      const birdTotal = person.birdDetails?.number || 0;
-
-      // Define matching conditions for each filter
-      const municipalityMatch = selectedMunicipality
-        ? person.location?.municipality === selectedMunicipality
-        : true;
-      const locationMatch = selectedLocation
-        ? person.location?._id === selectedLocation
-        : true;
-      const sectorTypeMatch = selectedSectorType
-        ? person.sectorType === selectedSectorType
-        : true;
-      const sectorModelMatch = selectedSectorModel
-        ? person.sector === selectedSectorModel
-        : true;
-      const searchMatch = searchQuery
-        ? person.name.toLowerCase().includes(searchQuery.toLowerCase())
-        : true;
-
-      // Additional filters based on the sector type and model
-      let additionalFilters = true;
-      if (selectedSectorModel) {
-        switch (selectedSectorType) {
-          case "Pemetari":
-            additionalFilters = person.treeDetails.some(
-              (tree) => tree?.type === selectedSectorModel
-            );
-            break;
-
-          case "Blegtori":
-            additionalFilters = person.livestockDetails.some(
-              (livestock) => livestock.type === selectedSectorModel
-            );
-            break;
-
-          case "ProdhimBimor":
-            additionalFilters = person.plantDetails.some(
-              (plant) => plant.type === selectedSectorModel
-            );
-            break;
-
-          case "Bletari":
-            additionalFilters = person.beeDetails.type === selectedSectorModel;
-            break;
-
-          case "Shpeztari":
-            additionalFilters = person.birdDetails.some(
-              (bird) => bird?.type === selectedSectorModel
-            );
-            break;
-
-          default:
-            additionalFilters = true;
-            break;
+        // Additional filters based on the sector type and model
+        let additionalFilters = true;
+        if (selectedSectorModel) {
+          switch (selectedSectorType) {
+            case "Pemetari":
+              additionalFilters = person.treeDetails.some(
+                (tree) => tree?.type === selectedSectorModel
+              );
+              break;
+            case "Blegtori":
+              additionalFilters = person.livestockDetails.some(
+                (livestock) => livestock.type === selectedSectorModel
+              );
+              break;
+            case "ProdhimBimor":
+              additionalFilters = person.plantDetails.some(
+                (plant) => plant.type === selectedSectorModel
+              );
+              break;
+            case "Bletari":
+              additionalFilters =
+                person.beeDetails?.type === selectedSectorModel;
+              break;
+            case "Shpeztari":
+              additionalFilters = person.birdDetails.some(
+                (bird) => bird?.type === selectedSectorModel
+              );
+              break;
+            default:
+              additionalFilters = true;
+          }
         }
-      }
 
-      // Combine all matching conditions
-      const finalMatch =
-        municipalityMatch &&
-        locationMatch &&
-        sectorTypeMatch &&
-        sectorModelMatch &&
-        searchMatch &&
-        additionalFilters;
+        return (
+          municipalityMatch &&
+          locationMatch &&
+          sectorTypeMatch &&
+          sectorModelMatch &&
+          searchMatch &&
+          additionalFilters
+        );
+      })
+      .map((person) => {
+        const totalItems =
+          person.treeDetails.reduce((sum, tree) => sum + tree.number, 0) +
+          person.livestockDetails.reduce(
+            (sum, livestock) => sum + livestock.number,
+            0
+          ) +
+          person.plantDetails.reduce((sum, plant) => sum + plant.number, 0) +
+          person.birdDetails.reduce((sum, bird) => sum + bird.number, 0) +
+          (person.beeDetails?.number || 0);
 
-      return finalMatch;
-    })
-    .map((person) => {
-      // Add the total count as a new property for sorting
-      const totalItems =
-        person.treeDetails.reduce((sum, tree) => sum + tree.number, 0) +
-        person.livestockDetails.reduce(
-          (sum, livestock) => sum + livestock.number,
-          0
-        ) +
-        person.plantDetails.reduce((sum, plant) => sum + plant.number, 0) +
-        person.birdDetails.reduce((sum, plant) => sum + plant.number, 0) +
-        (person.beeDetails?.number || 0);
+        return { ...person, totalItems };
+      })
+      .sort((a, b) => b.totalItems - a.totalItems);
 
-      return { ...person, totalItems };
-    })
-    .sort((a, b) => b.totalItems - a.totalItems);
+    setFilteredPersons(updatedPersons);
+  };
+
+  // Reset function to restore the initial state
+  const resetFilters = () => {
+    setSelectedMunicipality("");
+    setSelectedLocation("");
+    setSelectedSectorType("");
+    setSelectedSectorModel("");
+    setSearchQuery("");
+    setFilteredPersons(persons); // Reset back to the original list
+  };
 
   const groupedTotals = {
     treeTotals: groupAndSumByType(
@@ -242,6 +241,7 @@ function Persons() {
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Lista e personëve</h1>
+
       {currentPersons.length > 0 ? (
         <>
           <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -333,12 +333,18 @@ function Persons() {
             </div>
             <div>
               <button
+                className="border border-blue-700 text-blue-700  px-4 py-2 rounded "
+                onClick={resetFilters}
+              >
+                Reseto Filteret
+              </button>
+              <button
                 onClick={() =>
                   handleExportToExcel(
                     filteredPersons?.length > 0 ? filteredPersons : persons
                   )
                 }
-                className="border border-green-700 text-green-700  px-4 py-2 rounded "
+                className="border border-green-700 text-green-700  px-4 py-2 rounded ml-4"
               >
                 Eksporto ne Excel
               </button>
@@ -346,6 +352,7 @@ function Persons() {
           </div>
         </>
       ) : null}
+
       <div className="overflow-x-auto">
         {currentPersons.length > 0 ? (
           <table className="min-w-full bg-white border border-gray-200 rounded-lg">
@@ -538,7 +545,15 @@ function Persons() {
             </tbody>
           </table>
         ) : (
-          <div className="text-center py-10 text-gray-500">Nuk ka persona.</div>
+          <div className="flex flex-col items-center w-100 ">
+            <button
+              className="border border-blue-700 text-blue-700  px-4 py-2 rounded mb-4"
+              onClick={resetFilters}
+            >
+              Reseto Filteret
+            </button>
+            <div className="text-center  text-gray-500">Nuk ka persona.</div>
+          </div>
         )}
       </div>
 
