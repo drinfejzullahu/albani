@@ -29,7 +29,10 @@ function Persons() {
   useEffect(() => {
     axios
       .get("http://localhost:3000/api/persons")
-      .then((response) => setPersons(response.data))
+      .then((response) => {
+        setPersons(response.data);
+        setFilteredPersons(response.data);
+      })
       .catch((error) => console.error("Error:", error));
   }, []);
 
